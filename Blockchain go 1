@@ -1,0 +1,66 @@
+Go Project 1 
+
+package main
+
+import (
+    "crypto/sha256"
+    "encoding/json"
+    "fmt"
+    "strconv"
+    "strings"
+    "time"
+)
+
+// Define a block structure
+type Block struct {
+    Index        int
+    Timestamp    string
+    Data         string
+    PreviousHash string
+    Hash         string
+}
+
+// Create a new block
+func createBlock(index int, data string, previousHash string) Block {
+    timestamp := time.Now().UTC().String()
+    hash := calculateHash(index, timestamp, data, previousHash)
+    return Block{index, timestamp, data, previousHash, hash}
+}
+
+// Calculate the hash of a block
+func calculateHash(index int, timestamp string, data string, previousHash string) string {
+    record := strconv.Itoa(index) + timestamp + data + previousHash
+    hash := sha256.New()
+    hash.Write([]byte(record))
+    return fmt.Sprintf("%x", hash.Sum(nil))
+}
+
+// Chain blocks together
+func chainBlocks(blocks []Block) {
+    for i := 1; i < len(blocks); i++ {
+        blocks[i].PreviousHash = blocks[i-1].Hash
+        blocks[i].Hash = calculateHash(blocks[i].Index, blocks[i].Timestamp, blocks[i].Data, blocks[i].PreviousHash)
+    }
+}
+
+func main() {
+    // Create a genesis block
+    genesisBlock := createBlock(0, "Genesis Block", "")
+    blockchain := []Block{genesisBlock}
+
+    // Add more blocks
+    for i := 1; i <= 5; i++ {
+        data := fmt.Sprintf("Block %d data", i)
+        newBlock := createBlock(i, data, blockchain[i-1].Hash)
+        blockchain = append(blockchain, newBlock)
+    }
+
+    // Print the blockchain
+    for _, block := range blockchain {
+        fmt.Printf("Block %d:\n", block.Index)
+        fmt.Printf("  Timestamp: %s\n", block.Timestamp)
+        fmt.Printf("  Data: %s\n", block.Data)
+        fmt.Printf("  Previous Hash: %s\n", block.PreviousHash)
+        fmt.Printf("  Hash: %s\n\n", block.Hash)
+    }
+}
